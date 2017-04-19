@@ -8,6 +8,9 @@ class Item(QtWidgets.QListView):
     # An item is requesting details
     inspected = QtCore.Signal("QModelIndex")
 
+    # current item chagend
+    currentIndexChanged = QtCore.Signal("QModelIndex", "QModelIndex")
+
     def __init__(self, parent=None):
         super(Item, self).__init__(parent)
 
@@ -17,6 +20,8 @@ class Item(QtWidgets.QListView):
         self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.setResizeMode(QtWidgets.QListView.Adjust)
         self.setVerticalScrollMode(QtWidgets.QListView.ScrollPerPixel)
+
+        self.__previous_index = None
 
     def event(self, event):
         if not event.type() == QtCore.QEvent.KeyPress:
@@ -62,6 +67,11 @@ class Item(QtWidgets.QListView):
             if len(indexes) <= 1 and event.pos().x() < 20:
                 for index in indexes:
                     self.toggled.emit(index, None)
+
+            c_index = self.indexAt(event.pos())
+
+            self.currentIndexChanged.emit(c_index, self.__previous_index)
+            self.__previous_index = c_index
 
         return super(Item, self).mouseReleaseEvent(event)
 
