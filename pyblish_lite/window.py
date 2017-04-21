@@ -40,7 +40,7 @@ Todo:
 
 """
 
-from .vendor.Qt import QtCore, QtWidgets, QtGui
+from Qt import QtCore, QtWidgets, QtGui
 
 from . import model, view, util, delegate, settings
 from .awesome import tags as awesome

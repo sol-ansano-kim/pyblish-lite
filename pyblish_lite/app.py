@@ -2,7 +2,7 @@ import os
 import sys
 import contextlib
 
-from .vendor.Qt import QtWidgets, QtGui
+from Qt import QtWidgets, QtGui
 from . import control, util, window, compat, settings
 
 self = sys.modules[__name__]

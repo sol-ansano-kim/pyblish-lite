@@ -26,7 +26,7 @@ Roles:
 
 from . import settings
 from .awesome import tags as awesome
-from .vendor.Qt import QtCore, __binding__
+from Qt import QtCore, __binding__
 
 # GENERAL
 

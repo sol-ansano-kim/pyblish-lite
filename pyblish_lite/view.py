@@ -1,4 +1,4 @@
-from .vendor.Qt import QtCore, QtWidgets
+from Qt import QtCore, QtWidgets
 
 
 class Item(QtWidgets.QListView):
