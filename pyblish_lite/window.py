@@ -661,12 +661,16 @@ class Window(QtWidgets.QDialog):
 
         self.itemCheckingChanged.emit(checked_indices)
 
+    def _setRunButtonState(self):
+        data_model = self.data["models"]["instances"]
+
+        state = data_model.rowCount() > 1 and filter(lambda x: x.data(model.IsChecked), data_model) != []
+
+        self.data["buttons"]["play"].setEnabled(state)
+        self.data["buttons"]["validate"].setEnabled(state)
+
     def setItemsChecked(self, row_indices, data_model):
         checked_indices = []
-
-        if data_model.rowCount() < 1 or not row_indices:
-            self.data["buttons"]["play"].setEnabled(False)
-            self.data["buttons"]["validate"].setEnabled(False)
 
         for row in range(data_model.rowCount()):
             index = data_model.index(row, 0)
@@ -690,6 +694,8 @@ class Window(QtWidgets.QDialog):
                                                               kwargs={"new_value": state,
                                                                       "old_value": not state,
                                                                       "plugin": index.data(model.Object)}))
+
+        self._setRunButtonState()
 
         return checked_indices
 
