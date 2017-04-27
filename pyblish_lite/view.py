@@ -21,21 +21,7 @@ class Item(QtWidgets.QListView):
         self.setResizeMode(QtWidgets.QListView.Adjust)
         self.setVerticalScrollMode(QtWidgets.QListView.ScrollPerPixel)
 
-        # key status
-        self.__shiftPressed = False
-        self.__controlPressed = False
-        self.__altPressed = False
-
         self.__previous_index = None
-
-    def isShiftPressed(self):
-        return self.__shiftPressed
-
-    def isAltPressed(self):
-        return self.__altPressed
-
-    def isControlPressed(self):
-        return self.__controlPressed
 
     def event(self, event):
         if not event.type() == QtCore.QEvent.KeyPress:
@@ -67,36 +53,6 @@ class Item(QtWidgets.QListView):
     def leaveEvent(self, event):
         self._inspecting = False
         super(Item, self).leaveEvent(event)
-
-    def keyPressEvent(self, event):
-        if event.key() == QtCore.Qt.Key_Shift:
-            self.__shiftPressed = True
-            return True
-
-        elif event.key() == QtCore.Qt.Key_Alt:
-            self.__altPressed = True
-            return True
-
-        elif event.key() == QtCore.Qt.Key_Control:
-            self.__controlPressed = True
-            return True
-
-        return super(Item, self).keyPressEvent(event)
-
-    def keyReleaseEvent(self, event):
-        if event.key() == QtCore.Qt.Key_Shift:
-            self.__shiftPressed = False
-            return True
-
-        elif event.key() == QtCore.Qt.Key_Alt:
-            self.__altPressed = False
-            return True
-
-        elif event.key() == QtCore.Qt.Key_Control:
-            self.__controlPressed = False
-            return True
-
-        return super(Item, self).keyReleaseEvent(event)
 
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.MidButton:
