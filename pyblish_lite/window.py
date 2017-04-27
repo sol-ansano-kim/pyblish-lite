@@ -47,6 +47,8 @@ from .awesome import tags as awesome
 
 
 class Window(QtWidgets.QDialog):
+    itemCheckingChanged = QtCore.Signal(list)
+
     def __init__(self, controller, parent=None):
         super(Window, self).__init__(parent)
         self.__keyCondition = {}
@@ -652,22 +654,28 @@ class Window(QtWidgets.QDialog):
 
             rows = range(p_row, c_row + 1) if p_row <= c_row else range(c_row, p_row + 1)
 
-        self.setItemsChecked(rows, data_model)
+        checked_indices = self.setItemsChecked(rows, data_model)
 
         if not self.isKeyPreessed(QtCore.Qt.Key_Shift):
             self.__previndex = index
 
+        self.itemCheckingChanged.emit(checked_indices)
+
     def setItemsChecked(self, row_indices, data_model):
+        checked_indices = []
+
         if data_model.rowCount() < 1 or not row_indices:
             self.data["buttons"]["play"].setEnabled(False)
             self.data["buttons"]["validate"].setEnabled(False)
 
         for row in range(data_model.rowCount()):
+            index = data_model.index(row, 0)
+
             state = False
             if row in row_indices:
+                checked_indices.append(index)
                 state = True
 
-            index = data_model.index(row, 0)
             data_model.setData(index, state, model.IsChecked)
 
             if index.data(model.Type) == "instance":
@@ -682,6 +690,8 @@ class Window(QtWidgets.QDialog):
                                                               kwargs={"new_value": state,
                                                                       "old_value": not state,
                                                                       "plugin": index.data(model.Object)}))
+
+        return checked_indices
 
     def on_tab_changed(self, target):
         for page in self.data["pages"].values():
