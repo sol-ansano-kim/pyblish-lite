@@ -49,6 +49,9 @@ from .awesome import tags as awesome
 class Window(QtWidgets.QDialog):
     def __init__(self, controller, parent=None):
         super(Window, self).__init__(parent)
+        self.__keyCondition = {}
+        self.__previndex = None
+
         icon = QtGui.QIcon(util.get_asset("img", "logo-extrasmall.png"))
         self.setWindowFlags(self.windowFlags() |
                             QtCore.Qt.WindowTitleHint |
@@ -507,9 +510,9 @@ class Window(QtWidgets.QDialog):
         controller.about_to_process.connect(self.on_about_to_process,
                                             QtCore.Qt.DirectConnection)
 
-        artist_view.toggled.connect(self.on_item_toggled)
-        left_view.toggled.connect(self.on_item_toggled)
-        right_view.toggled.connect(self.on_item_toggled)
+        artist_view.clicked.connect(self.on_item_clicked)
+        left_view.clicked.connect(self.on_item_clicked)
+        right_view.clicked.connect(self.on_item_clicked)
 
         artist_view.inspected.connect(self.on_item_inspected)
         left_view.inspected.connect(self.on_item_inspected)
@@ -617,44 +620,68 @@ class Window(QtWidgets.QDialog):
                 "timestamp": str(index.data(model.Duration) or 0) + " ms",
             })
 
-    def on_item_toggled(self, index, state=None):
-        """An item is requesting to be toggled"""
+    def on_item_clicked(self, index):
         if not index.data(model.IsIdle):
-            return self.info("Cannot toggle")
+            return
 
         if not index.data(model.IsOptional):
-            return self.info("This item is mandatory")
+            return
 
-        if state is None:
-            state = not index.data(model.IsChecked)
+        data_model = index.model()
 
-        index.model().setData(index, state, model.IsChecked)
+        rows = []
+        c_row = index.row()
 
-        # Withdraw option to publish if no instances are toggled
-        play = self.findChild(QtWidgets.QWidget, "Play")
-        validate = self.findChild(QtWidgets.QWidget, "Validate")
-        any_instances = any(index.data(model.IsChecked)
-                            for index in self.data["models"]["instances"])
-        play.setEnabled(any_instances)
-        validate.setEnabled(any_instances)
+        if self.isKeyPreessed(QtCore.Qt.Key_Control):
+            for row in range(data_model.rowCount()):
+                ii = data_model.index(row, 0)
+                if data_model.data(ii, model.IsChecked):
+                    rows.append(row)
 
-        # Emit signals
-        if index.data(model.Type) == "instance":
-            instance = self.data["models"]["instances"].items[index.row()]
-            util.defer(
-                100, lambda: self.controller.emit_(
-                    signal="instanceToggled",
-                    kwargs={"new_value": state,
-                            "old_value": not state,
-                            "instance": instance}))
+                if data_model.data(index, model.IsChecked) and c_row in rows:
+                    rows.remove(c_row)
 
-        if index.data(model.Type) == "plugin":
-            util.defer(
-                100, lambda: self.controller.emit_(
-                    signal="pluginToggled",
-                    kwargs={"new_value": state,
-                            "old_value": not state,
-                            "plugin": index.data(model.Object)}))
+                else:
+                    rows.append(c_row)
+
+        elif not self.isKeyPreessed(QtCore.Qt.Key_Shift):
+            rows = [c_row]
+
+        else:
+            p_row = self.__previndex.row()
+
+            rows = range(p_row, c_row + 1) if p_row <= c_row else range(c_row, p_row + 1)
+
+        self.setItemsChecked(rows, data_model)
+
+        if not self.isKeyPreessed(QtCore.Qt.Key_Shift):
+            self.__previndex = index
+
+    def setItemsChecked(self, row_indices, data_model):
+        if data_model.rowCount() < 1 or not row_indices:
+            self.data["buttons"]["play"].setEnabled(False)
+            self.data["buttons"]["validate"].setEnabled(False)
+
+        for row in range(data_model.rowCount()):
+            state = False
+            if row in row_indices:
+                state = True
+
+            index = data_model.index(row, 0)
+            data_model.setData(index, state, model.IsChecked)
+
+            if index.data(model.Type) == "instance":
+                instance = data_model.items[row]
+                util.defer(100,
+                           lambda: self.controller.emit_(signal="instanceToggled",
+                                                         kwargs={"new_value": state,
+                                                                 "old_value": not state,
+                                                                 "instance": instance}))
+            elif index.data(model.Type) == "plugin":
+                util.defer(100, lambda: self.controller.emit_(signal="pluginToggled",
+                                                              kwargs={"new_value": state,
+                                                                      "old_value": not state,
+                                                                      "plugin": index.data(model.Object)}))
 
     def on_tab_changed(self, target):
         for page in self.data["pages"].values():
@@ -877,6 +904,15 @@ class Window(QtWidgets.QDialog):
             self.info("Stopped due to error(s), see Terminal.")
         else:
             self.info("Finished successfully!")
+
+    def isKeyPreessed(self, key):
+        return False if not self.__keyCondition.has_key(key) else self.__keyCondition[key]
+
+    def keyPressEvent(self, event):
+        self.__keyCondition[event.key()] = True
+
+    def keyReleaseEvent(self, event):
+        self.__keyCondition[event.key()] = False
 
     # -------------------------------------------------------------------------
     #
