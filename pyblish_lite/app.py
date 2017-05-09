@@ -28,9 +28,7 @@ def application():
 def install_fonts():
     database = QtGui.QFontDatabase()
 
-    for font in (os.path.join("opensans", "OpenSans-Regular.ttf"),
-                 os.path.join("opensans", "OpenSans-Semibold.ttf"),
-                 os.path.join("fontawesome", "fontawesome-webfont.ttf")):
+    for font in (os.path.join("fontawesome", "fontawesome-webfont.ttf")):
         path = util.get_asset("font", font)
 
         # TODO(marcus): Check if they are already installed first.
