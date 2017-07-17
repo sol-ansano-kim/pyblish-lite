@@ -664,7 +664,7 @@ class Window(QtWidgets.QDialog):
     def _setRunButtonState(self):
         data_model = self.data["models"]["instances"]
 
-        state = data_model.rowCount() > 1 and filter(lambda x: x.data(model.IsChecked), data_model) != []
+        state = data_model.rowCount() > 0 and filter(lambda x: x.data(model.IsChecked), data_model) != []
 
         self.data["buttons"]["play"].setEnabled(state)
         self.data["buttons"]["validate"].setEnabled(state)
